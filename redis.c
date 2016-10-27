@@ -103,6 +103,7 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, get, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, set, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, setex, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, setnxex, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, psetex, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, setnx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, getSet, NULL, ZEND_ACC_PUBLIC)
@@ -131,7 +132,9 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, sortDesc, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, sortDescAlpha, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPush, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lPushEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, rPush, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, rPushEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPushx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, rPushx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPop, NULL, ZEND_ACC_PUBLIC)
@@ -218,6 +221,7 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, hGetAll, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hExists, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hIncrBy, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, hIncrByEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hIncrByFloat, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMset, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMget, NULL, ZEND_ACC_PUBLIC)
@@ -1050,7 +1054,7 @@ PHP_REDIS_API void redis_generic_setex(INTERNAL_FUNCTION_PARAMETERS, char *keywo
  */
 PHP_METHOD(Redis, setex)
 {
-	redis_generic_setex(INTERNAL_FUNCTION_PARAM_PASSTHRU, "SETEX");
+    redis_generic_setex(INTERNAL_FUNCTION_PARAM_PASSTHRU, "SETEX");
 }
 
 /* {{{ proto boolean Redis::psetex(string key, long expire, string value)
@@ -1059,6 +1063,44 @@ PHP_METHOD(Redis, psetex)
 {
 	redis_generic_setex(INTERNAL_FUNCTION_PARAM_PASSTHRU, "PSETEX");
 }
+
+/* {{{ proto boolean Redis::setnxex(string key, long expire, string value)
+ */
+PHP_METHOD(Redis, setnxex)
+{
+
+    zval *object;
+    RedisSock *redis_sock;
+    char *key = NULL, *val = NULL, *cmd;
+    int key_len, val_len, cmd_len;
+    long expire;
+    int val_free = 0, key_free = 0;
+    zval *z_value;
+
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Oslz",
+                                     &object, redis_ce, &key, &key_len,
+                                     &expire, &z_value) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    if (redis_sock_get(object, &redis_sock TSRMLS_CC, 0) < 0) {
+        RETURN_FALSE;
+    }
+
+    val_free = redis_serialize(redis_sock, z_value, &val, &val_len TSRMLS_CC);
+    key_free = redis_key_prefix(redis_sock, &key, &key_len TSRMLS_CC);
+    cmd_len = redis_cmd_format_static(&cmd, "SETNXEX", "sls", key, key_len, expire, val, val_len);
+    if(val_free) STR_FREE(val);
+    if(key_free) efree(key);
+
+    REDIS_PROCESS_REQUEST(redis_sock, cmd, cmd_len);
+    IF_ATOMIC() {
+      redis_1_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
+    }
+
+    REDIS_PROCESS_RESPONSE(redis_1_response);
+}
+/* }}} */
 
 /* {{{ proto boolean Redis::setnx(string key, string value)
  */
@@ -1968,6 +2010,25 @@ PHP_METHOD(Redis, lPush)
 }
 /* }}} */
 
+/* {{{ proto boolean Redis::lPush(string key, string value, int ttl)
+ */
+PHP_METHOD(Redis, lPushEx)
+{
+    RedisSock *redis_sock;
+
+    if(FAILURE == generic_multiple_args_cmd(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+                    "LPUSHEX", sizeof("LPUSHEX") - 1,
+                    3, &redis_sock, 0, 0, 1))
+        return;
+
+    IF_ATOMIC() {
+        redis_long_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
+    }
+    REDIS_PROCESS_RESPONSE(redis_long_response);
+}
+/* }}} */
+
+
 /* {{{ proto boolean Redis::rPush(string key , string value)
  */
 PHP_METHOD(Redis, rPush)
@@ -1978,6 +2039,24 @@ PHP_METHOD(Redis, rPush)
                     "RPUSH", sizeof("RPUSH") - 1,
                     2, &redis_sock, 0, 0, 1))
 		return;
+
+    IF_ATOMIC() {
+        redis_long_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
+    }
+    REDIS_PROCESS_RESPONSE(redis_long_response);
+}
+/* }}} */
+
+/* {{{ proto boolean Redis::rPushEx(string key , string value, int ttl)
+ */
+PHP_METHOD(Redis, rPushEx)
+{
+    RedisSock *redis_sock;
+
+    if(FAILURE == generic_multiple_args_cmd(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+                    "RPUSHEX", sizeof("RPUSHEX") - 1,
+                    3, &redis_sock, 0, 0, 1))
+        return;
 
     IF_ATOMIC() {
         redis_long_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
@@ -5033,6 +5112,49 @@ PHP_METHOD(Redis, hIncrBy)
 	  redis_long_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
 	}
 	REDIS_PROCESS_RESPONSE(redis_long_response);
+
+}
+
+PHP_METHOD(Redis, hIncrByEx)
+{
+    zval *object;
+    RedisSock *redis_sock;
+    char *key = NULL, *cmd, *member, *val;
+    int key_len, member_len, cmd_len, val_len, key_free;
+    long expire;
+    int i;
+
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Osssl",
+                                     &object, redis_ce,
+                                     &key, &key_len, &member, &member_len, &val, &val_len, &expire) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    if (redis_sock_get(object, &redis_sock TSRMLS_CC, 0) < 0) {
+        RETURN_FALSE;
+    }
+
+    /* check for validity of numeric string */
+    i = 0;
+    if(val_len && val[0] == '-') { /* negative case */
+        i++;
+    }
+    for(; i < val_len; ++i) {
+        if(val[i] < '0' || val[i] > '9') {
+            RETURN_FALSE;
+        }
+    }
+
+    /* HINCRBY key member amount */
+    key_free = redis_key_prefix(redis_sock, &key, &key_len TSRMLS_CC);
+    cmd_len = redis_cmd_format_static(&cmd, "HINCRBYEX", "sssl", key, key_len, member, member_len, val, val_len, expire);
+    if(key_free) efree(key);
+
+    REDIS_PROCESS_REQUEST(redis_sock, cmd, cmd_len);
+    IF_ATOMIC() {
+      redis_long_response(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, NULL, NULL);
+    }
+    REDIS_PROCESS_RESPONSE(redis_long_response);
 
 }
 
