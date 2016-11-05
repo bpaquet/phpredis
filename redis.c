@@ -102,6 +102,7 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, get, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, set, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, setex, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, setnxex, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, psetex, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, setnx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, getSet, NULL, ZEND_ACC_PUBLIC)
@@ -130,7 +131,9 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, sortDesc, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, sortDescAlpha, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPush, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lPushEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, rPush, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, rPushEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPushx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, rPushx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, lPop, NULL, ZEND_ACC_PUBLIC)
@@ -220,6 +223,7 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, hGetAll, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hExists, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hIncrBy, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, hIncrByEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hIncrByFloat, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMset, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMget, NULL, ZEND_ACC_PUBLIC)
@@ -909,6 +913,14 @@ PHP_METHOD(Redis, psetex)
     REDIS_PROCESS_KW_CMD("PSETEX", redis_key_long_val_cmd, redis_boolean_response);
 }
 
+/* {{{ proto boolean Redis::setnxex(string key, long expire, string value)
+ */
+PHP_METHOD(Redis, setnxex)
+{
+    REDIS_PROCESS_KW_CMD("SETNXEX", redis_key_long_val_cmd, redis_1_response);
+}
+/* }}} */
+
 /* {{{ proto boolean Redis::setnx(string key, string value)
  */
 PHP_METHOD(Redis, setnx)
@@ -1184,11 +1196,28 @@ PHP_METHOD(Redis, lPush)
 }
 /* }}} */
 
+/* {{{ proto boolean Redis::lPushEx(string key, string value, int ttl)
+ */
+PHP_METHOD(Redis, lPushEx)
+{
+    REDIS_PROCESS_KW_CMD("LPUSHEX", redis_key_varval_cmd, redis_long_response);
+}
+/* }}} */
+
+
 /* {{{ proto boolean Redis::rPush(string key , string value)
  */
 PHP_METHOD(Redis, rPush)
 {
     REDIS_PROCESS_KW_CMD("RPUSH", redis_key_varval_cmd, redis_long_response);
+}
+/* }}} */
+
+/* {{{ proto boolean Redis::rPushEx(string key , string value, int ttl)
+ */
+PHP_METHOD(Redis, rPushEx)
+{
+    REDIS_PROCESS_KW_CMD("RPUSHEX", redis_key_varval_cmd, redis_long_response);
 }
 /* }}} */
 
@@ -2062,6 +2091,11 @@ PHP_METHOD(Redis, hIncrBy)
     REDIS_PROCESS_CMD(hincrby, redis_long_response);
 }
 /* }}} */
+
+PHP_METHOD(Redis, hIncrByEx)
+{
+    REDIS_PROCESS_KW_CMD("HINCRBYEX", redis_key_varval_cmd, redis_long_response);
+}
 
 /* {{{ array Redis::hMget(string hash, array keys) */
 PHP_METHOD(Redis, hMget) {
