@@ -1461,6 +1461,8 @@ int redis_hmincrbyex_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
     // Grab our array as a HashTable
     ht_vals = Z_ARRVAL_P(z_arr);
 
+    count = zend_hash_num_elements(Z_ARRVAL_P(z_arr));
+
     // Initialize our HMSET command (key + 2x each array entry), add key
     redis_cmd_init_sstr(&cmdstr, 2+(count*2), "HMINCRBYEX", sizeof("HMINCRBYEX")-1);
     redis_cmd_append_sstr(&cmdstr, key, key_len);
