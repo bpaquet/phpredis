@@ -239,6 +239,7 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, hIncrByFloat, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMset, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hMget, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, hMincrByEx, NULL, ZEND_ACC_PUBLIC)
 
      PHP_ME(Redis, multi, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, discard, NULL, ZEND_ACC_PUBLIC)
@@ -2229,6 +2230,13 @@ PHP_METHOD(Redis, hMget) {
 PHP_METHOD(Redis, hMset)
 {
     REDIS_PROCESS_CMD(hmset, redis_boolean_response);
+}
+/* }}} */
+
+/* {{{ proto bool Redis::hmset(string key, array keyvals) */
+PHP_METHOD(Redis, hMincrByEx)
+{
+    REDIS_PROCESS_CMD(hmincrbyex, redis_boolean_response);
 }
 /* }}} */
 
