@@ -170,6 +170,7 @@ PHP_METHOD(Redis, hIncrByEx);
 PHP_METHOD(Redis, hIncrByFloat);
 PHP_METHOD(Redis, hMset);
 PHP_METHOD(Redis, hMget);
+PHP_METHOD(Redis, hMincrByEx);
 
 PHP_METHOD(Redis, multi);
 PHP_METHOD(Redis, discard);
