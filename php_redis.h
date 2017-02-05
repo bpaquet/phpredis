@@ -166,6 +166,7 @@ PHP_METHOD(Redis, brpoplpush);
 
 PHP_METHOD(Redis, hGet);
 PHP_METHOD(Redis, hSet);
+PHP_METHOD(Redis, hSetEx);
 PHP_METHOD(Redis, hSetNx);
 PHP_METHOD(Redis, hDel);
 PHP_METHOD(Redis, hLen);

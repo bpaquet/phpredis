@@ -227,6 +227,7 @@ static zend_function_entry redis_functions[] = {
      /* 1.2 */
      PHP_ME(Redis, hGet, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hSet, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, hSetEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hSetNx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hDel, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, hLen, NULL, ZEND_ACC_PUBLIC)
@@ -2144,6 +2145,13 @@ PHP_METHOD(Redis, zUnion) {
 PHP_METHOD(Redis, hSet)
 {
     REDIS_PROCESS_CMD(hset, redis_long_response);
+}
+/* }}} */
+
+/* {{{ proto long Redis::hsetex(string key, int ttl, string mem, string val) */
+PHP_METHOD(Redis, hSetEx)
+{
+    REDIS_PROCESS_CMD(hsetex, redis_long_response);
 }
 /* }}} */
 
