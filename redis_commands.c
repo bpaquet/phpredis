@@ -2112,6 +2112,49 @@ int redis_hsetnx_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
         cmd, cmd_len, slot);
 }
 
+/* HSETEX */
+static int gen_hsetex_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
+                        char *kw, char **cmd, int *cmd_len, short *slot)
+{
+    char *key, *mem, *val;
+    size_t mem_len, key_len, val_len;
+    zend_long ttl;
+    int val_free, key_free;
+    zval *z_val;
+
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slsz", &key, &key_len,
+                             &ttl, &mem, &mem_len, &z_val)==FAILURE)
+    {
+        return FAILURE;
+    }
+
+    // Prefix/serialize
+    val_free = redis_serialize(redis_sock, z_val, &val, &val_len TSRMLS_CC);
+    key_free = redis_key_prefix(redis_sock, &key,  &key_len);
+
+    // Construct command
+    *cmd_len = redis_cmd_format_static(cmd, kw, "slss", key, key_len, ttl, mem,
+        mem_len, val, val_len);
+
+    // Set slot
+    CMD_SET_SLOT(slot,key,key_len);
+
+    /* Cleanup our key and value */
+    if (val_free) efree(val);
+    if (key_free) efree(key);
+
+    // Success
+    return SUCCESS;
+}
+
+/* HSETEX */
+int redis_hsetex_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
+                   char **cmd, int *cmd_len, short *slot, void **ctx)
+{
+    return gen_hsetex_cmd(INTERNAL_FUNCTION_PARAM_PASSTHRU, redis_sock, "HSETEX",
+        cmd, cmd_len, slot);
+}
+
 /* SRANDMEMBER */
 int redis_srandmember_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
                           char **cmd, int *cmd_len, short *slot, void **ctx,
