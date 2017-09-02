@@ -2133,7 +2133,7 @@ static int gen_hsetex_cmd(INTERNAL_FUNCTION_PARAMETERS, RedisSock *redis_sock,
     key_free = redis_key_prefix(redis_sock, &key,  &key_len);
 
     // Construct command
-    *cmd_len = redis_cmd_format_static(cmd, kw, "slss", key, key_len, ttl, mem,
+    *cmd_len = REDIS_CMD_SPPRINTF(cmd, kw, "slss", key, key_len, ttl, mem,
         mem_len, val, val_len);
 
     // Set slot
