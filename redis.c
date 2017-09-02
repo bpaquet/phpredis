@@ -126,9 +126,11 @@ static zend_function_entry redis_functions[] = {
      PHP_ME(Redis, delete, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, incr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, incrBy, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, incrByEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, incrByFloat, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, decr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, decrBy, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, decrByEx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, type, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, append, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, getRange, NULL, ZEND_ACC_PUBLIC)
@@ -937,6 +939,13 @@ PHP_METHOD(Redis, incrBy){
 }
 /* }}} */
 
+/* {{{ proto boolean Redis::incrByEx(string key, long expire, int value)
+ */
+PHP_METHOD(Redis, incrByEx)
+{
+    REDIS_PROCESS_KW_CMD("INCRBYEX", redis_key_long_val_cmd, redis_long_response);
+}
+
 /* {{{ proto float Redis::incrByFloat(string key, float value)
  */
 PHP_METHOD(Redis, incrByFloat) {
@@ -958,6 +967,14 @@ PHP_METHOD(Redis, decrBy){
     REDIS_PROCESS_KW_CMD("DECRBY", redis_key_long_cmd, redis_long_response);
 }
 /* }}} */
+
+/* {{{ proto boolean Redis::incrByEx(string key, long expire, int value)
+ */
+PHP_METHOD(Redis, decrByEx)
+{
+    REDIS_PROCESS_KW_CMD("DECRBYEX", redis_key_long_val_cmd, redis_long_response);
+}
+
 
 /* {{{ proto array Redis::getMultiple(array keys)
  */
